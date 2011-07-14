@@ -26,13 +26,14 @@
             // global defaults
             // $this->props["UID"] = substr (md5 (rand ()),0,8) . "@autonomous.com"; // no actual use
             $this->props["sequence"] = "0"; // how many times this event has been modified
+			$this->props["UID"] = md5 (time () . rand ()) . '@ohai.ca'; // remove this if you plan to do any serious work
         }
         
         public function setType ($type) {
             // allow only defined component values
             if (in_array ($type, 
                     array ("VCALENDAR", "VEVENT", "VTODO", "VJOURNAL", 
-                           "VFREEBUSY", "VTIMEZONE", "/X-(.)+/i", "iana-token"
+                           "VFREEBUSY", "VTIMEZONE", "VALARM", "/X-(.)+/i", "iana-token"
                 ))) {
                 $this->props['type'] = $type;
             } else {
@@ -96,17 +97,16 @@
             
             $this->addProperties (array (
                 "DTSTART" => date ( // DTSTART = starting time
-                    // http://ca2.php.net/manual/en/function.date.php
-                    "Ymd\THis",
-                    $start),
+                    $this->makeIcalTime ($start)
+				),
                 "DTSTAMP" => date ( // assume same as DTSTART
                     // http://ca2.php.net/manual/en/function.date.php
-                    "Ymd\THis",
-                    $start),
+                    $this->makeIcalTime ($start - 1)
+				), // "I created this event one second before it starts"
                 "DTEND" => date ( // DTEND = ending time
                     // http://ca2.php.net/manual/en/function.date.php
-                    "Ymd\THis",
-                    $end)
+                    $this->makeIcalTime ($end)
+				)
             ));
             
             // make sure all day flags are still correctly set
@@ -156,6 +156,19 @@
 			}
 		}
         
+		public function setAlarm ($text = '', $days = 0, $hours = 0, $minutes = 0, $seconds = 0) {
+			// set an alarm for this event - so many days/hours/minutes/seconds in advance.
+			// reminder text will be $text.
+			// actually creates a VALARM object as a child of the current object.
+			$alarm = new iCalComponent ("VAlARM");
+			$alarm->addProperties (array (
+			    'ACTION' => 'DISPLAY',
+				'DESCRIPTION' => $text,
+				'TRIGGER' => "-P$daysDT$hoursH$minutesM$secondsS"
+			));
+			$this->addChild ($alarm);
+		}
+		
         /*  === END peripheral property helpers === */
         
         
@@ -225,6 +238,12 @@
                 "second" => date ("s", $time)
             );
          }
+		 
+		 public function makeIcalTime ($time) {
+			 // create an iCal time (i.e. "20110713T185610Z" based on a given time.
+			 $tz = $this->splitTime ($time);
+			 return $tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z';
+		 }
     }
     
     class iCal extends iCalComponent {
@@ -245,10 +264,23 @@
                 $this->props, 
                 array (
                     // required defaults
-                    'PRODID' =>  '-//Autonomous Company//Brians iCal Generator MIMEDIR//EN',
-                    'VERSION' => '2.0'
+                    'VERSION' => '2.0', // "The VERSION property should be the first property on the calendar"
+					'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
+                    'CALSCALE' => 'GREGORIAN',
+                    'METHOD' => 'PUBLISH',
+					'X-WR-CALNAME' => 'Brians iCal Generator',
+					'CREATED' => '20110713T185610',
+					'LAST-MODIFIED' => '20110713T185610'
                 )
             );
+			
+			// time zone is not required, is it?
+			$timezone = new iCalComponent ("VTIMEZONE");
+			$timezone->addProperties (array (
+			    'TZID' => date_default_timezone_get (),
+				'X-LIC-LOCATION' => date_default_timezone_get ()
+			));
+			$this->addChild ($timezone);
         }
         
         function addEvent ($title, $description, $start_time, $end_time = null) {
@@ -281,7 +313,15 @@
             // build properties array
             $this->props = array_merge (
                 array_change_key_case ($props, CASE_UPPER), 
-                $this->props
+                $this->props,
+				array (
+                    // required defaults
+                    'CREATED' =>  date ("Ymd\THis", time ()), // "it was created now"
+					'STATUS' => 'CONFIRMED',
+					'TRANSP' => 'OPAQUE',
+					'SEQUENCE' => '0',
+					'CLASS' => 'PRIVATE'
+                )
             );
         }
     }
