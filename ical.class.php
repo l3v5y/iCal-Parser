@@ -26,7 +26,7 @@
             // global defaults
             // $this->props["UID"] = substr (md5 (rand ()),0,8) . "@autonomous.com"; // no actual use
             $this->props["sequence"] = "0"; // how many times this event has been modified
-			$this->props["UID"] = md5 (time () . rand ()) . '@ohai.ca'; // remove this if you plan to do any serious work
+            $this->props["UID"] = md5 (time () . rand ()) . '@ohai.ca'; // remove this if you plan to do any serious work
         }
         
         public function setType ($type) {
@@ -56,10 +56,10 @@
                 }
             }
         }
-		
-		public function hasProperty ($name) {
-			return in_array ($what, $this->props);
-		}
+        
+        public function hasProperty ($name) {
+            return in_array ($what, $this->props);
+        }
         
         
         
@@ -96,17 +96,9 @@
             }
             
             $this->addProperties (array (
-                "DTSTART" => date ( // DTSTART = starting time
-                    $this->makeIcalTime ($start)
-				),
-                "DTSTAMP" => date ( // assume same as DTSTART
-                    // http://ca2.php.net/manual/en/function.date.php
-                    $this->makeIcalTime ($start - 1)
-				), // "I created this event one second before it starts"
-                "DTEND" => date ( // DTEND = ending time
-                    // http://ca2.php.net/manual/en/function.date.php
-                    $this->makeIcalTime ($end)
-				)
+                "DTSTART" => $this->makeIcalTime ($start), // DTSTART = starting time
+                "DTSTAMP" => $this->makeIcalTime ($start - 1), // "I created this event one second before it starts"
+                "DTEND" => $this->makeIcalTime ($end) // DTEND = ending time
             ));
             
             // make sure all day flags are still correctly set
@@ -135,40 +127,44 @@
         public function setTitle ($what) {
             $this->addProperty ("SUMMARY", $what);
         }
-		
-		public function setOwner ($whom) {
-			$this->addProperty ("ORGANIZER", $whom);
-		}
         
-		public function setStatus ($what) {
-			// if $what is integer, the indexed status is used (not recommended)
-			// if $what is a string, the string will be used as status, BUT
-			//     only if the string is one of the allowed values
-			
-			
-			// can be one of the following
-			$allowed_statuses = array ("TENTATIVE", "CONFIRMED", "CANCELLED", 
-			    "NEEDS-ACTION", "COMPLETED", "IN-PROCESS", "DRAFT", "FINAL");
-			if (is_int ($what)) {
-	    		$this->addProperty ("STATUS", $allowed_statuses[$what]);
-			} elseif (in_array ($what, $allowed_statuses)) {
-	    		$this->addProperty ("STATUS", $what);
-			}
-		}
+        public function setOwner ($whom) {
+            $this->addProperty ("ORGANIZER", $whom);
+        }
         
-		public function setAlarm ($text = '', $days = 0, $hours = 0, $minutes = 0, $seconds = 0) {
-			// set an alarm for this event - so many days/hours/minutes/seconds in advance.
-			// reminder text will be $text.
-			// actually creates a VALARM object as a child of the current object.
-			$alarm = new iCalComponent ("VAlARM");
-			$alarm->addProperties (array (
-			    'ACTION' => 'DISPLAY',
-				'DESCRIPTION' => $text,
-				'TRIGGER' => "-P$daysDT$hoursH$minutesM$secondsS"
-			));
-			$this->addChild ($alarm);
-		}
-		
+        public function setStatus ($what) {
+            // if $what is integer, the indexed status is used (not recommended)
+            // if $what is a string, the string will be used as status, BUT
+            //     only if the string is one of the allowed values
+            
+            
+            // can be one of the following
+            $allowed_statuses = array ("TENTATIVE", "CONFIRMED", "CANCELLED", 
+                "NEEDS-ACTION", "COMPLETED", "IN-PROCESS", "DRAFT", "FINAL");
+            if (is_int ($what)) {
+                $this->addProperty ("STATUS", $allowed_statuses[$what]);
+            } elseif (in_array ($what, $allowed_statuses)) {
+                $this->addProperty ("STATUS", $what);
+            }
+        }
+        
+        public function setAlarm ($text = '', $days = 0, $hours = 0, $minutes = 0, $seconds = 0) {
+            // set an alarm for this event - so many days/hours/minutes/seconds in advance.
+            // reminder text will be $text.
+            // actually creates a VALARM object as a child of the current object.
+            $alarm = new iCalComponent ("VAlARM");
+            $alarm->addProperties (array (
+                'ACTION' => 'DISPLAY',
+                'DESCRIPTION' => $text,
+                'TRIGGER' => "-P$daysDT$hoursH$minutesM$secondsS"
+            ));
+            $this->addChild ($alarm);
+        }
+        
+        public function setRecurrence () {
+            // "I'll leave it to you as a take-home exercise" - Robert J. Le Roy
+        }
+        
         /*  === END peripheral property helpers === */
         
         
@@ -230,20 +226,20 @@
         private function splitTime ($time) {
             // given $time (made by time ()), return an array of it
             return array (
-                "day" => date ("j", $time),
-                "month" => date ("n", $time),
-                "year" => date ("Y", $time),
-                "hour" => date ("G", $time),
-                "minute" => date ("i", $time),
-                "second" => date ("s", $time)
+                "day" => str_pad (date ("j", $time), 2, "0", STR_PAD_LEFT),
+                "month" => str_pad (date ("n", $time), 2, "0", STR_PAD_LEFT),
+                "year" => str_pad (date ("Y", $time), 4, "0", STR_PAD_LEFT),
+                "hour" => str_pad (date ("H", $time), 2, "0", STR_PAD_LEFT),
+                "minute" => str_pad (date ("i", $time), 2, "0", STR_PAD_LEFT),
+                "second" => str_pad (date ("s", $time), 2, "0", STR_PAD_LEFT)
             );
          }
-		 
-		 public function makeIcalTime ($time) {
-			 // create an iCal time (i.e. "20110713T185610Z" based on a given time.
-			 $tz = $this->splitTime ($time);
-			 return $tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z';
-		 }
+         
+         public function makeIcalTime ($time) {
+             // create an iCal time (i.e. "20110713T185610Z" based on a given time.
+             $tz = $this->splitTime ($time);
+			 return ($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z');
+         }
     }
     
     class iCal extends iCalComponent {
@@ -252,6 +248,9 @@
         function __construct ($props = null) {
             // your object declaration has changed.
             // supply optional properties here instead of the object type.
+			
+			$this->props['VERSION'] = '2.0'; // "The VERSION property should be the first property on the calendar"
+                    
             parent::__construct ();
             
             if (!is_array ($props)) {
@@ -264,37 +263,36 @@
                 $this->props, 
                 array (
                     // required defaults
-                    'VERSION' => '2.0', // "The VERSION property should be the first property on the calendar"
-					'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
+                    'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
                     'CALSCALE' => 'GREGORIAN',
                     'METHOD' => 'PUBLISH',
-					'X-WR-CALNAME' => 'Brians iCal Generator',
-					'CREATED' => '20110713T185610',
-					'LAST-MODIFIED' => '20110713T185610'
+                    'X-WR-CALNAME' => 'Brians iCal Generator',
+                    'CREATED' => $this->makeIcalTime (time () - 1),
+                    'LAST-MODIFIED' => $this->makeIcalTime (time () - 1)
                 )
             );
-			
-			// time zone is not required, is it?
-			$timezone = new iCalComponent ("VTIMEZONE");
-			$timezone->addProperties (array (
-			    'TZID' => date_default_timezone_get (),
-				'X-LIC-LOCATION' => date_default_timezone_get ()
-			));
-			$this->addChild ($timezone);
+            
+            // time zone is not required, is it?
+            $timezone = new iCalComponent ("VTIMEZONE");
+            $timezone->addProperties (array (
+                'TZID' => date_default_timezone_get (),
+                'X-LIC-LOCATION' => date_default_timezone_get ()
+            ));
+            $this->addChild ($timezone);
         }
         
         function addEvent ($title, $description, $start_time, $end_time = null) {
-            // making my life easy
-			if (class_exists ("iCalEvent")) {
-				$b = new iCalEvent ();
-				$b->setTitle ($title);
-				$b->setDescription ($description);
-				$b->setTime ($start_time, $end_time);
-				
-				$this->addChild ($b);
-			} else {
-				die ("Cannot find iCalEvent class");
-			}
+            // making my life easier
+            if (class_exists ("iCalEvent")) {
+                $b = new iCalEvent ();
+                $b->setTitle ($title);
+                $b->setDescription ($description);
+                $b->setTime ($start_time, $end_time);
+                
+                $this->addChild ($b);
+            } else {
+                die ("Cannot find iCalEvent class");
+            }
         }
     }
     
@@ -314,13 +312,13 @@
             $this->props = array_merge (
                 array_change_key_case ($props, CASE_UPPER), 
                 $this->props,
-				array (
+                array (
                     // required defaults
-                    'CREATED' =>  date ("Ymd\THis", time ()), // "it was created now"
-					'STATUS' => 'CONFIRMED',
-					'TRANSP' => 'OPAQUE',
-					'SEQUENCE' => '0',
-					'CLASS' => 'PRIVATE'
+                    'CREATED' =>  $this->makeIcalTime (time () - 1), // "it was created a second ago"
+                    'STATUS' => 'CONFIRMED',
+                    'TRANSP' => 'OPAQUE',
+                    'SEQUENCE' => '0',
+                    'CLASS' => 'PRIVATE'
                 )
             );
         }
