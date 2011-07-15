@@ -44,6 +44,9 @@
         public function addProperty ($name, $value) {
             // add a property for this iCalComponent.
             // there is no removal.
+			
+			$value = str_replace ("\n", "\\n", $value); // replace newlines with \n, then a new line, then a space in front
+			$value = chunk_split ($value, 65, "\r\n "); // chunk no more than 75 chars per line
             $this->props[strtoupper ($name)] = $value;
         }
         
@@ -265,6 +268,7 @@
                 array (
                     // required defaults
                     'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
+					'X-PUBLISHED-TTL' => '1', // update interval, in some kind of format
                     'CALSCALE' => 'GREGORIAN'/*,
                     'METHOD' => 'PUBLISH',
                     'X-WR-CALNAME' => 'Brians iCal Generator',
