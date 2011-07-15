@@ -238,7 +238,8 @@
          public function makeIcalTime ($time) {
              // create an iCal time (i.e. "20110713T185610Z" based on a given time.
              $tz = $this->splitTime ($time);
-			 return ($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z');
+			 // return ($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z');
+			 return ($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second']);
          }
     }
     
@@ -264,21 +265,21 @@
                 array (
                     // required defaults
                     'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
-                    'CALSCALE' => 'GREGORIAN',
+                    'CALSCALE' => 'GREGORIAN'/*,
                     'METHOD' => 'PUBLISH',
                     'X-WR-CALNAME' => 'Brians iCal Generator',
                     'CREATED' => $this->makeIcalTime (time () - 1),
-                    'LAST-MODIFIED' => $this->makeIcalTime (time () - 1)
+                    'LAST-MODIFIED' => $this->makeIcalTime (time () - 1) */
                 )
             );
             
             // time zone is not required, is it?
-            $timezone = new iCalComponent ("VTIMEZONE");
+            /*$timezone = new iCalComponent ("VTIMEZONE");
             $timezone->addProperties (array (
                 'TZID' => date_default_timezone_get (),
                 'X-LIC-LOCATION' => date_default_timezone_get ()
             ));
-            $this->addChild ($timezone);
+            $this->addChild ($timezone);*/
         }
         
         function addEvent ($title, $description, $start_time, $end_time = null) {
@@ -314,11 +315,11 @@
                 $this->props,
                 array (
                     // required defaults
-                    'CREATED' =>  $this->makeIcalTime (time () - 1), // "it was created a second ago"
                     'STATUS' => 'CONFIRMED',
+                    'SEQUENCE' => '0'/*,
+                    'CREATED' =>  $this->makeIcalTime (time () - 1), // "it was created a second ago"
                     'TRANSP' => 'OPAQUE',
-                    'SEQUENCE' => '0',
-                    'CLASS' => 'PRIVATE'
+                    'CLASS' => 'PRIVATE'*/
                 )
             );
         }
