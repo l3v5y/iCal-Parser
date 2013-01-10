@@ -10,21 +10,20 @@ So, here it is.
 If you're out of your mind, you can add items programmatically, like this:
 
     <?php
-        header ('Content-type: text/calendar; charset=windows-1252');
+        // make sure Outlook knows what it is
+        header('Content-type: text/calendar; charset=windows-1252');
         header('Cache-Control: public');
         header('Content-Description: File Transfer');
         header('Content-Disposition: attachment; filename=cal.ics');
-        require_once ('ical.class.php');
+
+        require_once('ical.class.php');
 
         $a = new iCal();
 
-        $a->addEvent(
-            'Lunch with Friends',        // event name
-            'It will be Vietnamese!',    // event description
-            strtotime ('Thursday 12pm'), // start time
-            strtotime ('Thursday 12:55') // end time
-        );
-
+        $a->addEvent('Lunch with Friends',          // event name
+                     'It will be Vietnamese!',      // event description
+                     strtotime('Thursday 12pm'),    // start time
+                     strtotime ('Thursday 12:55')); // end time
         echo $a;
     ?>
 
