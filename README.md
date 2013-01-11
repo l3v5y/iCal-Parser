@@ -23,7 +23,7 @@ If you're out of your mind, you can add items programmatically, like this:
         $a->addEvent('Lunch with Friends',          // event name
                      'It will be Vietnamese!',      // event description
                      strtotime('Thursday 12pm'),    // start time
-                     strtotime ('Thursday 12:55')); // end time
+                     strtotime('Thursday 12:55'));  // end time
         echo $a;
     ?>
 

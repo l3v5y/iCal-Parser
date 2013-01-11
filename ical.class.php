@@ -1,7 +1,8 @@
 <?php
-    /*  iCal parser classes V1.01(CC 3.0, MIT) 2012 Brian Lai
+    /*  iCal generator classes V1.01(CC 3.0, MIT) 2012 Brian Lai
 
         Example usage:
+            include_once('ical.class.php');
             $a = new iCal();
             $a->addEvent('title', 'description', time(), time());
             die((string) $a);
@@ -17,7 +18,7 @@
         // event, to-do, journal, or...
         // see 'Objects' in http://goo.gl/klqvs(as per RFC 2445 p.9)
 
-        protected $props = array();
+        protected $props = array ();
 
         public function __construct($type='VCALENDAR') {
             // set the type if you call it with one.
@@ -31,14 +32,14 @@
 
         public function setType($type) {
             // allow only defined component values
-            static $allowed_types = array('VCALENDAR', 'VEVENT', 'VTODO',
-                                          'VJOURNAL', 'VFREEBUSY',
-                                          'VTIMEZONE', 'VALARM', '/X-(.)+/i',
-                                          'iana-token');
-            if(in_array($type, $allowed_types)) {
+            static $allowed_types = array ('VCALENDAR', 'VEVENT', 'VTODO',
+                                            'VJOURNAL', 'VFREEBUSY',
+                                            'VTIMEZONE', 'VALARM', '/X-(.)+/i',
+                                            'iana-token');
+            if (preg_match($allowed_types, $type, )) {
                 $this->props['type'] = $type;
             } else {
-                die('Type ' . $type . ' is not allowed in specification');
+                throw new Exception('Type ' . $type . ' is not allowed in specification');
             }
         }
 
@@ -46,7 +47,7 @@
             // add a property for this iCalComponent.
             // there is no removal.
 
-            if($name === 'type') {
+            if ($name === 'type') {
                 // special case: type setting
                 $this->setType($value);
             }
@@ -71,26 +72,25 @@
         public function addProperties($props) {
             // same effect as addProperty. supply an array of
             //    ($name => $value, $name => $value).
-            if(sizeof($props) > 0) {
-                foreach($props as $name => $value) {
+            if (sizeof($props) > 0) {
+                foreach ($props as $name => $value) {
                     $this->addProperty($name, $value);
                 }
             }
         }
 
         public function hasProperty($name) {
-            return in_array($what, $this->props);
+            // returns true if
+            // this object has the virtual property called $name.
+            return in_array($name, $this->props);
         }
 
         public function getProperty($name, $default=null) {
-            if($this->hasProperty($name)) {
+            if ($this->hasProperty($name)) {
                 return $this->props[$name];
             }
             return $default;
         }
-
-
-
 
 
         /*  === peripheral property helpers ===
@@ -98,11 +98,11 @@
             function names should be easy enough to read. */
 
         public function setAllDay($is_it_all_day) {
-            if($is_it_all_day) { // if you gave it true
-                $this->addProperties(array(
-                    'X-FUNAMBOL-ALLDAY' => 'TRUE',
-                    'X-MICROSOFT-CDO-ALLDAYEVENT' => 'TRUE'
-                ));
+            if ($is_it_all_day) { // if you gave it true
+                $this->addProperties(array (
+                       'X-FUNAMBOL-ALLDAY' => 'TRUE',
+                       'X-MICROSOFT-CDO-ALLDAYEVENT' => 'TRUE'
+                 ));
             } else { // if you gave it false
                 unset($this->props['X-FUNAMBOL-ALLDAY']);
                 unset($this->props['X-MICROSOFT-CDO-ALLDAYEVENT']);
@@ -118,29 +118,31 @@
             // if $end is left null, it will be the same as $start
             // times are added as local time.
 
-            if(is_null($end)) {
+            if (is_null($end)) {
                 $end = $start;
             }
 
-            $this->addProperties(array(
-                'DTSTART' => $this->makeIcalTime($start), // DTSTART = starting time
-                'DTSTAMP' => $this->makeIcalTime($start - 1), // 'I created this event one second before it starts'
-                'DTEND' => $this->makeIcalTime($end) // DTEND = ending time
-            ));
+            $this->addProperties(array (
+               'DTSTART' => $this->makeIcalTime($start),
+               // DTSTART = starting time
+               'DTSTAMP' => $this->makeIcalTime($start - 1),
+               // 'I created this event one second before it starts'
+               'DTEND' => $this->makeIcalTime($end)
+               // DTEND = ending time
+             ));
 
             // make sure all day flags are still correctly set
             // that would be if the event starts 00:00:00 on one day
             // and ends 00:00:00 on the next.
             $time_ss = $this->splitTime($start);
             $time_se = $this->splitTime($end);
-            if($time_ss['hour'] == 0 &&
-                $time_ss['minute'] == 0 &&
-                $time_ss['second'] == 0 &&
-                $time_se['hour'] == 0 &&
-                $time_se['minute'] == 0 &&
-                $time_se['second'] == 0 &&
-               (
-                    // see if day is more ahead
+            if ($time_ss['hour'] === '0' &&
+                $time_ss['minute'] === '0' &&
+                $time_ss['second'] === '0' &&
+                $time_se['hour'] === '0' &&
+                $time_se['minute'] === '0' &&
+                $time_se['second'] === '0' &&
+                (   // see if day is more ahead
                     $time_se['day'] > $time_ss['day'] ||
                     $time_se['month'] > $time_ss['month'] ||
                     $time_se['year'] > $time_ss['year']
@@ -152,6 +154,7 @@
         }
 
         public function setTitle($what) {
+            // dynamic variable
             $this->SUMMARY = $what;
         }
 
@@ -166,24 +169,26 @@
 
 
             // can be one of the following
-            $allowed_statuses = array('TENTATIVE', 'CONFIRMED', 'CANCELLED',
-                'NEEDS-ACTION', 'COMPLETED', 'IN-PROCESS', 'DRAFT', 'FINAL');
-            if(is_int($what)) {
+            $allowed_statuses = array ('TENTATIVE', 'CONFIRMED', 'CANCELLED',
+                                        'NEEDS-ACTION', 'COMPLETED',
+                                        'IN-PROCESS', 'DRAFT', 'FINAL');
+            if (is_int($what)) {
                 $this->STATUS = $allowed_statuses[$what];
-            } elseif(in_array($what, $allowed_statuses)) {
+            } elseif (in_array($what, $allowed_statuses)) {
                 $this->STATUS = $what;
             }
         }
 
-        public function setAlarm($text = '', $days = 0, $hours = 0, $minutes = 0, $seconds = 0) {
+        public function setAlarm($text='', $days=0, $hours=0, $minutes=0,
+                                   $seconds=0) {
             // set an alarm for this event - so many days/hours/minutes/seconds in advance.
             // reminder text will be $text.
             // actually creates a VALARM object as a child of the current object.
             $alarm = new iCalComponent('VAlARM');
-            $alarm->addProperties(array(
+            $alarm->addProperties(array (
                 'ACTION' => 'DISPLAY',
                 'DESCRIPTION' => $text,
-                'TRIGGER' => "-P$daysDT$hoursH$minutesM$secondsS"
+                'TRIGGER' => "-P{$days}DT{$hours}H{$minutes}M{$seconds}S"
             ));
             $this->addChild($alarm);
         }
@@ -195,28 +200,24 @@
         /*  === END peripheral property helpers === */
 
 
-
-
-
-
         public function addChild($child) {
             // add an iCalComponent within this one. example would be
             // adding a VEVENT iCalComponent within a VCALENDAR iCalComponent.
             // child can be both an iCalComponent or a subclass of it.
             // there is no removal.
-            if(get_class($child) == 'iCalComponent' ||
+            if (get_class($child) == 'iCalComponent' ||
                 is_subclass_of($child, 'iCalComponent')) {
                 $this->props['children'][] = $child;
             } else {
-                die('Child added is not an iCalComponent');
+                throw new Exception('Child added is not an iCalComponent');
             }
         }
 
         public function addChildren($children) {
             // same effect as addChild. supply an array of
             //    ($child, $child, $child).
-            if(sizeof($children) > 0) {
-                foreach($children as $child) {
+            if (sizeof($children) > 0) {
+                foreach ($children as $child) {
                     $this->addChild($child);
                 }
             }
@@ -229,17 +230,17 @@
             $buffer = 'BEGIN:' . $this->props['type'];
 
             // export properties of this object(upper case ones only)
-            if(sizeof($this->props) > 0) {
-                foreach($this->props as $key => $value) {
-                    if(strtoupper($key) == $key) {
+            if (sizeof($this->props) > 0) {
+                foreach ($this->props as $key => $value) {
+                    if (strtoupper($key) == $key) {
                         $buffer .= "\r\n" . $key . ':' . $value;
                     }
                 }
             }
 
             // export children.
-            if(sizeof($this->props['children']) > 0) {
-                foreach($this->props['children'] as $child) {
+            if (sizeof($this->props['children']) > 0) {
+                foreach ($this->props['children'] as $child) {
                     // BEGIN: line does not have \r\n, so add it for the child
                     $buffer .= "\r\n" . $child->toString();
                 }
@@ -257,7 +258,7 @@
 
         private function splitTime($time) {
             // given $time(made by time()), return an array of it
-            return array(
+            return array (
                 'day' => str_pad(date('j', $time), 2, '0', STR_PAD_LEFT),
                 'month' => str_pad(date('n', $time), 2, '0', STR_PAD_LEFT),
                 'year' => str_pad(date('Y', $time), 4, '0', STR_PAD_LEFT),
@@ -265,20 +266,20 @@
                 'minute' => str_pad(date('i', $time), 2, '0', STR_PAD_LEFT),
                 'second' => str_pad(date('s', $time), 2, '0', STR_PAD_LEFT)
             );
-         }
+        }
 
-         public function makeIcalTime($time) {
-             // create an iCal time(i.e. '20110713T185610Z' based on a given time.
-             $tz = $this->splitTime($time);
-             // return($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z');
-             return($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second']);
-         }
+        public function makeIcalTime($time) {
+            // create an iCal time(i.e. '20110713T185610Z' based on a given time.
+            $tz = $this->splitTime($time);
+            // return($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second'] . 'Z');
+            return ($tz['year'] . $tz['month'] . $tz['day'] . 'T' . $tz['hour'] . $tz['minute'] . $tz['second']);
+        }
     }
 
     class iCal extends iCalComponent {
         // so, VCALENDAR.
 
-        function __construct($props = null) {
+        function __construct($props=null) {
             // your object declaration has changed.
             // supply optional properties here instead of the object type.
 
@@ -286,19 +287,21 @@
 
             parent::__construct();
 
-            if(!is_array($props)) {
-                $props = array(); // null needs to become array for later code
+            if (!is_array($props)) {
+                $props = array (); // null needs to become array for later code
             }
 
             // build properties array
             $this->props = array_merge(
                 array_change_key_case($props, CASE_UPPER),
                 $this->props,
-                array(
-                    // required defaults
-                    'PRODID' =>  '-//Google Inc//Google Calendar 70.9054//EN', // of course
-                    'X-PUBLISHED-TTL' => '1', // update interval, in some kind of format
-                    'CALSCALE' => 'GREGORIAN'/*,
+                array (
+                      // required defaults
+                      'PRODID' => '-//Google Inc//Google Calendar 70.9054//EN',
+                      // of course
+                      'X-PUBLISHED-TTL' => '1',
+                      // update interval, in some kind of format
+                      'CALSCALE' => 'GREGORIAN' /*,
                     'METHOD' => 'PUBLISH',
                     'X-WR-CALNAME' => 'Brians iCal Generator',
                     'CREATED' => $this->makeIcalTime(time() - 1),
@@ -307,9 +310,10 @@
             );
         }
 
-        function addEvent($title, $description, $start_time, $end_time = null) {
+        function addEvent($title, $description, $start_time,
+                          $end_time=null) {
             // making my life easier
-            if(class_exists('iCalEvent')) {
+            if (class_exists('iCalEvent')) {
                 $b = new iCalEvent();
                 $b->setTitle($title);
                 $b->setDescription($description);
@@ -317,7 +321,7 @@
 
                 $this->addChild($b);
             } else {
-                die('Cannot find iCalEvent class');
+                throw new Exception('Cannot find iCalEvent class');
             }
         }
     }
@@ -325,23 +329,23 @@
     class iCalEvent extends iCalComponent {
         // so, VEVENT.
 
-        function __construct($props = null) {
+        function __construct($props=null) {
             // your object declaration has changed.
             // supply optional properties here instead of the object type.
             parent::__construct('VEVENT');
 
-            if(!is_array($props)) {
-                $props = array(); // null needs to become array for later code
+            if (!is_array($props)) {
+                $props = array (); // null needs to become array for later code
             }
 
             // build properties array
             $this->props = array_merge(
                 array_change_key_case($props, CASE_UPPER),
                 $this->props,
-                array(
-                    // required defaults
-                    'STATUS' => 'CONFIRMED',
-                    'SEQUENCE' => '0'/*,
+                array (
+                      // required defaults
+                      'STATUS' => 'CONFIRMED',
+                      'SEQUENCE' => '0' /*,
                     'CREATED' =>  $this->makeIcalTime(time() - 1), // 'it was created a second ago'
                     'TRANSP' => 'OPAQUE',
                     'CLASS' => 'PRIVATE'*/
@@ -353,13 +357,13 @@
     class iCalTodo extends iCalComponent {
         // so, VTODO.
 
-        function __construct($props = null) {
+        function __construct($props=null) {
             // your object declaration has changed.
             // supply optional properties here instead of the object type.
             parent::__construct('VTODO');
 
-            if(!is_array($props)) {
-                $props = array(); // null needs to become array for later code
+            if (!is_array($props)) {
+                $props = array (); // null needs to become array for later code
             }
 
             // build properties array
@@ -373,13 +377,13 @@
     class iCalJournal extends iCalComponent {
         // so, VJOURNAL.
 
-        function __construct($props = null) {
+        function __construct($props=null) {
             // your object declaration has changed.
             // supply optional properties here instead of the object type.
             parent::__construct('VJOURNAL');
 
-            if(!is_array($props)) {
-                $props = array(); // null needs to become array for later code
+            if (!is_array($props)) {
+                $props = array (); // null needs to become array for later code
             }
 
             // build properties array
