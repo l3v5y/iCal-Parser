@@ -36,9 +36,23 @@
                                             'VJOURNAL', 'VFREEBUSY',
                                             'VTIMEZONE', 'VALARM', '/X-(.)+/i',
                                             'iana-token');
-            if (preg_match($allowed_types, $type, )) {
+            $match = false;
+
+            foreach ($allowed_types as $pattern)
+            {
+                // if (preg_match($pattern, $type))
+                if (strpos($type, $pattern) !== false)
+                {
+                    $match = true;
+                }
+            }
+
+            if($match)
+            {
                 $this->props['type'] = $type;
-            } else {
+            }
+            else
+            {
                 throw new Exception('Type ' . $type . ' is not allowed in specification');
             }
         }
@@ -393,3 +407,4 @@
             );
         }
     }
+?>
