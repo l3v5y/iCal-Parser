@@ -324,14 +324,16 @@
             );
         }
 
+
         function addEvent($title, $description, $start_time,
-                          $end_time=null) {
+                          $end_time=null,$all_day=false,$props=null) {
             // making my life easier
             if (class_exists('iCalEvent')) {
-                $b = new iCalEvent();
+                $b = new iCalEvent($props);
                 $b->setTitle($title);
                 $b->setDescription($description);
                 $b->setTime($start_time, $end_time);
+                $b->setAllDay($all_day);
 
                 $this->addChild($b);
             } else {
