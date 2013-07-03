@@ -253,7 +253,7 @@
             }
 
             // export children.
-            if (sizeof($this->props['children']) > 0) {
+            if (array_key_exists('children',$this->props) && sizeof($this->props['children']) > 0) {
                 foreach ($this->props['children'] as $child) {
                     // BEGIN: line does not have \r\n, so add it for the child
                     $buffer .= "\r\n" . $child->toString();
